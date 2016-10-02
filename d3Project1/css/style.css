@@ -1,0 +1,135 @@
+body
+{
+	font-family: arial;
+	font-family: 12px;
+}
+
+select
+{
+	height: 30px;
+	color: #363636;
+	font-size: 14px;
+	line-height: 30px;
+}
+
+.radio-selector > .radio{
+	height: 30px;
+	padding: 3px 15px;
+	background: none;	
+	border-radius: 20px;
+	border: 1px solid #D6D6D6;
+	margin: 2px;
+	line-height: 30px;
+	display: inline-block;
+	cursor: pointer;
+	color: #363636;
+}
+
+.radio-selector > .radio:not(:hover)
+{
+	transition: 0.5s ease;
+	background-color: #E6E6E6;
+}
+
+.radio-selector > .radio:hover
+{
+	transition: 0.5s ease;
+	background-color: #D6D6D6;
+}
+
+.radio-selector > .radio.checked
+{
+	background-color: #3080C0 !important;
+	border: 1px solid #4090D0;
+	color: white !important;
+}
+#chart1
+{
+	padding: 10px;
+	margin: 20px 100px;
+	background-color: #F6F6F6;
+}
+
+.chart-header
+{
+	width: 80%;
+	margin-left: auto;
+	margin-right: auto;
+
+}
+
+.chart-canvas
+{
+	position: relative;
+	width: 80%;
+	margin: 20px auto 10px auto;
+}
+
+#plotter{
+	clear: both;
+	position: relative;
+	width: 80%;
+	height: 300px;
+	margin: 20px auto 10px auto;
+
+}
+
+#plotter > div
+{
+	position: absolute;
+	bottom: 0px;
+	width: 2px;
+
+}
+
+
+#plotter > div:hover
+{
+	transition: 0.2s ease;
+	background: #000000;
+
+}
+
+.data-item-desc
+{
+	width: 200px;
+	max-height: 80px;
+	height: auto;
+	padding: 10px 10px;
+	border-radius: 3px;
+	border: 1px solid #A6A6A6;
+	background-color: rgba(240, 240, 240, 150);
+	margin-top: 10px;
+	margin-bottom: 20px;
+	right: 5px;
+	float: right;
+	font-size: 14px;
+	line-height: 18px;
+}
+
+.data-item-desc >p {
+	margin: 0px;
+}
+
+rect[Attributes Style] {
+	
+}
+
+
+.inactive {
+    fill: #AAA;
+  }
+  .active {
+    fill: #aabbcc;
+  }
+  
+  #usMap path:hover {
+    opacity: 0.7;
+  }
+  .chartHover {
+    fill: #FF0;
+  }
+   #usMap {
+    width:100%;
+    display: inline-block;
+  }

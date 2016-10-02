@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+
+<html lang="en">
+	<head>
+		<title>US Unemployment Visualizations</title>		
+		<script
+			  src="./js/jquery-2.2.4.min.js"
+			  integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="
+			  crossorigin="anonymous">
+		</script>
+
+		<script src="./js/d3.v3.min.js"></script>
+
+
+	<!-- Mobile Specific Meta -->
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+		<link rel="stylesheet" href="css/style.css">
+
+		
+	</head>
+	
+	<body>
+	<div class="container-fluid">
+ 	 <div class="row">
+		<div id="chart1">
+			<div class="chart-header">
+				<h3>Unemployment rate by state: </h3>
+				<p>
+					<span>Select state: </span>
+					<span>
+						<select id="select_state" style="width:200px;"></select>
+					</span>
+				</p>
+				<div class="radio-selector">
+					<span> Select period:</span>
+					<div class="radio" data-value="0">12 months</div>
+					<div class="radio" data-value="1">5 years</div>
+					<div class="radio" data-value="2">10 years</div>
+					<div class="radio" data-value="3">20 years</div>
+					<div class="radio checked" data-value="4">Whole period</div>
+				</div>
+				<div class="data-item-desc span3">
+						<p>
+							<span><b>Year:</b></span>&nbsp;<span id="data-item-desc-year"></span>
+							<br>
+							<span><b>Month:</b></span>&nbsp;<span id="data-item-desc-month"></span>
+							<br>
+							<span><b>Unemployment rate:</b></span>&nbsp;<span id="data-item-desc-u-rate"></span>
+						</p>
+				</div>
+			</div>
+			<div id="chart1-area" class="chart-area">
+				<div id="chart1-canvas" class="chart-canvas">
+					<div id="plotter"></div>				
+					
+				</div>
+			</div>
+			<div id="usMap">
+    			  <svg></svg>
+    		</div>
+		</div>
+	</div>
+</div>
+		
+	</body>
+	
+	<script>
+
+			 // US map drawing.
+	    //Width and height of map
+	    var width = $("#usMap").width();
+	    var height = 300;
+
+	    // D3 Projection
+	    var projection = d3.geo.albersUsa()
+	                       .translate([width/2, height/2])    // translate to center of screen
+	                       .scale([width]);          // scale things down so see entire US
+
+	    // Define path generator
+	    var path = d3.geo.path()               // path generator that will convert GeoJSON to SVG paths
+	                 .projection(projection);  // tell path generator to use albersUsa projection
+	    
+	    //Create SVG element and append map to the SVG
+	    var mapSvg = d3.select("#usMap")
+	                .select("svg")
+	                .attr("width", width)
+	                .attr("height", height);
+	    
+	  mapSvg.append("rect")
+      .attr("class", "background")
+      .attr("width", width)
+      .attr("height", height)
+      .style("fill", "#FFF")
+      .on("click", function() {
+        mapSvg.selectAll("path").each(function(d) {
+          if (d3.select(this).classed("active")) {
+            
+          }
+        });
+      });
+    
+    d3.json("data/us-states.json", function(json) {
+      
+    // Bind the data to the SVG and create one path per GeoJSON feature
+    mapSvg.selectAll("path")
+        .data(json.features)
+        .enter()
+        .append("path")
+        .attr("d", path)
+        .attr("id", function(d) { return d.properties.name.replace(/\s+/g, ''); })
+        .style("stroke", "#fff")
+        .style("stroke-width", "1")
+        .classed("inactive", false)
+        .classed("active", true)
+        .on("click", function() {
+          
+        });
+    });
+    
+	    
+
+		var select_state_default_prompt="Select state";
+		var months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+		var max_plot_width=1000;
+		var plot_height = 300;
+		var bar_width = 2;
+		var csv_data = [];
+
+		d3.csv("data/unemployment.csv", function(d) {
+			return {
+				year : +d.Year,
+				month : d.Month,
+				state : d.State,
+				u_rate : +d["Unemployment rates"]
+			};
+			}, function(data) {
+
+			console.log(data.length);
+			csv_data = data;
+
+			var all_states = [];
+
+			data.forEach(function(d,i){
+				if(all_states.indexOf(d.state)<0)
+				{
+					all_states.push(d.state);
+				}
+			});	
+
+			console.log(all_states.length);
+			
+			var state_select_options = [select_state_default_prompt];
+			state_select_options = state_select_options.concat(all_states);
+
+			var state_selection = d3.select("#select_state")
+			  .selectAll("option")
+			  .data(state_select_options);
+			  
+			  state_selection.enter()
+			  .append("option")
+			  .text(function(d){return d});
+
+			  state_selection.exit().remove();
+		});	
+
+		console.log(csv_data);
+
+		$('#select_state').change( function(){
+			var state = this.value;
+			console.log(state);
+
+			if(state != select_state_default_prompt)
+			{
+				show_state_data(state);
+			}	
+			else
+			{
+				d3.select('#plotter')
+					.selectAll('div')
+					.remove()
+			}		
+		});		
+
+
+		var show_state_data = function(state)
+		{
+			var state_data = csv_data.filter(function(d) {return d.state == state});
+
+			state_data.sort(function(a,b){
+				return d3.ascending(a.year*12 + months.indexOf(a.month), b.year*12 + months.indexOf(b.month));
+			});
+
+			var period = parseInt($('.radio-selector').find('.checked').attr('data-value'));
+			
+			switch(period)
+			{
+				case 0: //12 months' data only
+					state_data = state_data.slice(-12);
+					break;
+
+				case 1: //5 years
+					state_data = state_data.slice(-60);
+					break;
+
+				case 2: //10 years
+					state_data = state_data.slice(-120);
+					break;
+
+				case 3: //20 years
+					state_data = state_data.slice(-240);
+					break;
+
+				default:
+					break;
+			}						
+
+			bar_width = Math.floor(max_plot_width/state_data.length);		
+
+			var h_scaler = d3.scale.linear()
+					  .domain([0, d3.max(state_data, function(d){return d.u_rate})])
+					  .range([0, plot_height]);
+
+
+    var color = d3.scale.category20();
+
+
+			d3.select('#chart1-canvas').style('width', (state_data.length * bar_width) + "px");
+
+	
+
+			var plotter = d3.select('#plotter')
+							.style('width', (state_data.length * bar_width) + "px" )
+						    .selectAll('div')
+						    .data(state_data)
+						    .style('width', function(d){return bar_width + "px"})
+						    .style('height', function(d){return h_scaler(d.u_rate) + "px"})
+				  		    .style('left', function(d,i){return (i*bar_width) + "px"})
+				  		    .attr('data-year', function(d){return d.year})
+				  		    .attr('data-month', function(d){return d.month})
+				  		    .attr('data-u-rate', function(d){return d.u_rate})
+				  		    .style("background", function(d,i){return color(d.month);})
+				  		    .on('mouseover', function (d,i){
+					  		    	var b = d3.select(this);
+					  		    	d3.select('#data-item-desc-year').text(b.attr('data-year'));
+					  		    	d3.select('#data-item-desc-month').text(b.attr('data-month'));
+					  		    	d3.select('#data-item-desc-u-rate').text(b.attr('data-u-rate'));
+					  		    	return;
+				  		    	})
+			
+			plotter.enter().append('div')
+						    .style('width', function(d){return bar_width + "px"})
+						    .style('height', function(d){return h_scaler(d.u_rate) + "px"})
+						  	.style('left', function(d,i){return (i*bar_width) + "px"})
+						  	.attr('data-year', function(d){return d.year})
+						  	.attr('data-month', function(d){return d.month})
+				  		    .attr('data-u-rate', function(d){return d.u_rate})
+				  		    .style("background", function(d,i){return color(d.month);})
+  							.on('mouseover', function (d,i){
+					  		    	var b = d3.select(this);
+					  		    	d3.select('#data-item-desc-year').text(b.attr('data-year'));
+					  		    	d3.select('#data-item-desc-month').text(b.attr('data-month'));
+					  		    	d3.select('#data-item-desc-u-rate').text(b.attr('data-u-rate'));
+					  		    	return;
+				  		    	})
+			plotter.exit().remove();
+		}
+	</script>
+
+	<script type="text/javascript">
+	$(document).ready(function(){
+		$('.radio').click(function(e)
+		{
+			var r = $(this);
+			r.parent('.radio-selector').find('.radio').removeClass('checked');
+			r.addClass('checked');
+
+			$('#select_state').trigger('change');
+		});
+	});
+	</script>
+
+	
+</html>
